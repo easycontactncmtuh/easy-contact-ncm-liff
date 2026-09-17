@@ -32,19 +32,25 @@
 
 const profile = await liff.getProfile();
 
+const params = new URLSearchParams(window.location.search);
+const consultId = params.get("consultId");
+
 status.textContent =
-  "LINE authentication successful | NCM: " + profile.displayName;
+  "LINE authentication successful | NCM: " +
+  profile.displayName +
+  " | Consult ID: " +
+  (consultId || "ไม่พบ Consult ID");
+            } catch (error) {
+      status.textContent =
+        "LIFF ERROR: " + (error.message || String(error));
 
-      } catch (error) {
-        status.textContent =
-          "LIFF ERROR: " + (error.message || String(error));
-
-        console.error(error);
-      }
+      console.error(error);
     }
+  }
 
-    initializeLIFF();
-  </script>
+  initializeLIFF();
+</script>
 
 </body>
 </html>
+
