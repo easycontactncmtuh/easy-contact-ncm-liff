@@ -25,8 +25,15 @@
           withLoginOnExternalBrowser: true
         });
 
-        status.textContent =
-          "LIFF initialized | Logged in = " + liff.isLoggedIn();
+        if (!liff.isLoggedIn()) {
+  status.textContent = "LINE Login required";
+  return;
+}
+
+const profile = await liff.getProfile();
+
+status.textContent =
+  "LINE authentication successful | NCM: " + profile.displayName;
 
       } catch (error) {
         status.textContent =
