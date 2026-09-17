@@ -40,6 +40,37 @@ status.textContent =
   profile.displayName +
   " | Consult ID: " +
   (consultId || "ไม่พบ Consult ID");
+        const idToken = liff.getIDToken();
+
+if (!idToken) {
+  throw new Error("ไม่พบ LINE ID token");
+}
+
+const BACKEND_URL = "https://script.google.com/macros/s/AKfycbweDtqTMk4xpxnr8-4e3MAfCt3xLwKf5RRcXL9-R1h5nk4t4r3nY7xD9gG8eoZUlPBh/exec";
+
+const backendResponse = await fetch(BACKEND_URL, {
+  method: "POST",
+  headers: {
+    "Content-Type": "text/plain;charset=utf-8"
+  },
+  body: JSON.stringify({
+    action: "verifyNCM",
+    idToken: idToken,
+    consultId: consultId
+  })
+});
+
+const result = await backendResponse.json();
+
+if (!result.success) {
+  throw new Error(result.error || "Backend verification failed");
+}
+
+status.textContent =
+  "Backend verification successful | NCM: " +
+  (result.displayName || profile.displayName) +
+  " | Consult ID: " +
+  (consultId || "ไม่พบ Consult ID");
             } catch (error) {
       status.textContent =
         "LIFF ERROR: " + (error.message || String(error));
