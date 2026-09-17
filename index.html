@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Easy Contact NCM</title>
+
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+
+<body>
+
+  <h2>Easy Contact NCM</h2>
+  <p id="status">Initializing LIFF...</p>
+
+  <script>
+    const LIFF_ID = "2011629396-n8tvniQM";
+
+    async function initializeLIFF() {
+      const status = document.getElementById("status");
+
+      try {
+        await liff.init({
+          liffId: LIFF_ID,
+          withLoginOnExternalBrowser: true
+        });
+
+        status.textContent =
+          "LIFF initialized | Logged in = " + liff.isLoggedIn();
+
+      } catch (error) {
+        status.textContent =
+          "LIFF ERROR: " + (error.message || String(error));
+
+        console.error(error);
+      }
+    }
+
+    initializeLIFF();
+  </script>
+
+</body>
+</html>
