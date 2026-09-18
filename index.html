@@ -12,7 +12,11 @@
 
   <h2>Easy Contact NCM</h2>
   <p id="status">Initializing LIFF...</p>
+<button id="ackButton" style="display:none;">
+  รับ Consult
+</button>
 
+<p id="ackStatus"></p>
   <script>
     const LIFF_ID = "2011629396-n8tvniQM";
 
@@ -65,7 +69,75 @@ const result = await backendResponse.json();
 if (!result.success) {
   throw new Error(result.error || "Backend verification failed");
 }
+if (!result.authorized) {
+  throw new Error("คุณไม่มีสิทธิ์รับ Consult นี้");
+}
 
+const ackButton = document.getElementById("ackButton");
+const ackStatus = document.getElementById("ackStatus");        
+ackButton.style.display = "inline-block";
+        
+ackButton.addEventListener("click", async () => {
+
+  // ป้องกันการกดซ้ำระหว่างกำลังส่งข้อมูล
+  ackButton.disabled = true;
+  ackButton.textContent = "กำลังรับ Consult...";
+
+  try {
+
+    const currentIdToken = liff.getIDToken();
+
+    if (!currentIdToken) {
+      throw new Error("ไม่พบ LINE ID token");
+    }
+
+    const ackResponse = await fetch(BACKEND_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        action: "acknowledgeConsult",
+        idToken: currentIdToken,
+        consultId: consultId
+      })
+    });
+
+    const ackResult = await ackResponse.json();
+
+    if (!ackResult.success) {
+      throw new Error(
+        ackResult.error || "ไม่สามารถรับ Consult ได้"
+      );
+    }
+
+    if (ackResult.alreadyAcknowledged) {
+
+      ackStatus.textContent =
+        "Consult นี้ถูกรับแล้วโดย " +
+        ackResult.ncmName;
+
+      ackButton.textContent = "รับ Consult แล้ว";
+
+    } else {
+
+      ackStatus.textContent =
+        "รับ Consult เรียบร้อย โดย " +
+        ackResult.ncmName;
+
+      ackButton.textContent = "รับ Consult แล้ว";
+    }
+
+  } catch (error) {
+
+    ackStatus.textContent =
+      "เกิดข้อผิดพลาด: " +
+      (error.message || String(error));
+
+    ackButton.disabled = false;
+    ackButton.textContent = "รับ Consult";
+  }
+});        
 status.textContent =
   "Backend verification successful | NCM: " +
   (result.displayName || profile.displayName) +
