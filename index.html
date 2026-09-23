@@ -61,7 +61,25 @@ if (!idToken) {
 
 const BACKEND_URL = "https://script.google.com/macros/s/AKfycbweDtqTMk4xpxnr8-4e3MAfCt3xLwKf5RRcXL9-R1h5nk4t4r3nY7xD9gG8eoZUlPBh/exec";
 
-const backendResponse = await fetch(BACKEND_URL, {
+async function fetchWithRetry(url, options, maxAttempts = 3) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      return await fetch(url, options);
+    } catch (error) {
+      lastError = error;
+
+      if (attempt < maxAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
+  }
+
+  throw lastError;
+}
+
+const backendResponse = await fetchWithRetry(BACKEND_URL, {
   method: "POST",
   headers: {
     "Content-Type": "text/plain;charset=utf-8"
@@ -72,7 +90,6 @@ const backendResponse = await fetch(BACKEND_URL, {
     consultId: consultId
   })
 });
-
 const result = await backendResponse.json();
 
 if (!result.success) {
