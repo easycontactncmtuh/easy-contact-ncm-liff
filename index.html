@@ -12,6 +12,10 @@
 
   <h2>Easy Contact NCM</h2>
   <p id="status">Initializing LIFF...</p>
+  <div id="consultDetail" style="display:none;">
+  <p><strong>เรื่องที่ส่งปรึกษา</strong></p>
+  <p id="consultContent"></p>
+</div>
 <button id="ackButton" style="display:none;">
   รับ Consult
 </button>
@@ -74,7 +78,14 @@ if (!result.authorized) {
 }
 
 const ackButton = document.getElementById("ackButton");
-const ackStatus = document.getElementById("ackStatus");        
+const ackStatus = document.getElementById("ackStatus");
+const consultDetail = document.getElementById("consultDetail");
+const consultContent = document.getElementById("consultContent");
+
+consultContent.textContent =
+  result.consultContent || "ไม่มีรายละเอียดการส่งปรึกษา";
+
+consultDetail.style.display = "block";
 ackButton.style.display = "inline-block";
         
 ackButton.addEventListener("click", async () => {
