@@ -86,12 +86,47 @@ const ackButton = document.getElementById("ackButton");
 const ackStatus = document.getElementById("ackStatus");
 const consultDetail = document.getElementById("consultDetail");
 const consultContent = document.getElementById("consultContent");
-
+const assessButton = document.getElementById("assessButton");
+const assessStatus = document.getElementById("assessStatus");
 consultContent.textContent =
   result.consultContent || "ไม่มีรายละเอียดการส่งปรึกษา";
 
 consultDetail.style.display = "block";
-ackButton.style.display = "inline-block";
+// แสดงปุ่มตามสถานะปัจจุบันของ Consult
+if (result.isAssessed) {
+
+  // ประเมินเรียบร้อยแล้ว
+  ackButton.style.display = "inline-block";
+  ackButton.disabled = true;
+  ackButton.textContent = "รับ Consult แล้ว";
+
+  assessButton.style.display = "inline-block";
+  assessButton.disabled = true;
+  assessButton.textContent = "ประเมินผู้ป่วยแล้ว";
+
+  ackStatus.textContent =
+    "Consult นี้ถูกรับแล้วโดย " + result.ncmName;
+
+  assessStatus.textContent =
+    "ประเมินผู้ป่วยเรียบร้อยแล้ว";
+
+} else if (result.isAcknowledged) {
+
+  // รับ Consult แล้ว แต่ยังไม่ได้ประเมิน
+  ackButton.style.display = "inline-block";
+  ackButton.disabled = true;
+  ackButton.textContent = "รับ Consult แล้ว";
+
+  ackStatus.textContent =
+    "Consult นี้ถูกรับแล้วโดย " + result.ncmName;
+
+  assessButton.style.display = "inline-block";
+  assessButton.disabled = false;
+} else {
+
+  // ยังไม่ได้รับ Consult
+  ackButton.style.display = "inline-block";
+}
         
 ackButton.addEventListener("click", async () => {
 
@@ -129,22 +164,25 @@ ackButton.addEventListener("click", async () => {
 
     if (ackResult.alreadyAcknowledged) {
 
-      ackStatus.textContent =
-        "Consult นี้ถูกรับแล้วโดย " +
-        ackResult.ncmName;
+  ackStatus.textContent =
+    "Consult นี้ถูกรับแล้วโดย " +
+    ackResult.ncmName;
 
-      ackButton.textContent = "รับ Consult แล้ว";
+  ackButton.textContent = "รับ Consult แล้ว";
 
-    } else {
+} else {
 
-      ackStatus.textContent =
-        "รับ Consult เรียบร้อย โดย " +
-        ackResult.ncmName;
+  ackStatus.textContent =
+    "รับ Consult เรียบร้อย โดย " +
+    ackResult.ncmName;
 
-      ackButton.textContent = "รับ Consult แล้ว";
-    }
+  ackButton.textContent = "รับ Consult แล้ว";
+}
 
-  } catch (error) {
+// เมื่อ Consult ถูกรับแล้ว ให้แสดงปุ่ม Assessment
+assessButton.style.display = "inline-block";
+assessButton.disabled = false;
+} catch (error) {
 
     ackStatus.textContent =
       "เกิดข้อผิดพลาด: " +
@@ -152,6 +190,65 @@ ackButton.addEventListener("click", async () => {
 
     ackButton.disabled = false;
     ackButton.textContent = "รับ Consult";
+  }
+});   
+assessButton.addEventListener("click", async () => {
+
+  // ป้องกันการกดซ้ำระหว่างกำลังส่งข้อมูล
+  assessButton.disabled = true;
+  assessButton.textContent = "กำลังบันทึก Assessment...";
+
+  try {
+
+    const currentIdToken = liff.getIDToken();
+
+    if (!currentIdToken) {
+      throw new Error("ไม่พบ LINE ID token");
+    }
+
+    const assessResponse = await fetch(BACKEND_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        action: "assessConsult",
+        idToken: currentIdToken,
+        consultId: consultId
+      })
+    });
+
+    const assessResult = await assessResponse.json();
+
+    if (!assessResult.success) {
+      throw new Error(
+        assessResult.error || "ไม่สามารถบันทึก Assessment ได้"
+      );
+    }
+
+    if (assessResult.alreadyAssessed) {
+
+      assessStatus.textContent =
+        "Consult นี้ได้รับการประเมินแล้วโดย " +
+        assessResult.ncmName;
+
+    } else {
+
+      assessStatus.textContent =
+        "บันทึกการประเมินเรียบร้อย โดย " +
+        assessResult.ncmName;
+    }
+
+    assessButton.textContent = "ประเมินผู้ป่วยแล้ว";
+
+  } catch (error) {
+
+    assessStatus.textContent =
+      "เกิดข้อผิดพลาด: " +
+      (error.message || String(error));
+
+    assessButton.disabled = false;
+    assessButton.textContent = "ประเมินผู้ป่วยแล้ว";
   }
 });        
 status.textContent =
